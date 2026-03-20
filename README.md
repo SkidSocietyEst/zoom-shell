@@ -245,6 +245,19 @@ ZOOM_EXPORT_USER(name, password, level);
 - **I/O 纯回调** — read/write 可对接 UART/USB/SPI/BLE 等任何接口
 - **条件编译裁剪** — 每个功能模块可独立开关，最小配置约 2KB ROM
 
+## CI / 发版（GitHub Actions）
+
+推送至 `main` / `master` 或提交 PR 时，会自动执行 `make test` 与 `make demo`。
+
+**发布新版本**（在仓库根目录执行）：
+
+```bash
+git tag -a v1.0.0 -m "Zoom Shell 1.0.0"
+git push origin v1.0.0
+```
+
+推送符合 `v*.*.*` 的 tag 后，会再次跑测试、用 `git archive` 生成 `zoom-shell-<版本>.tar.gz` / `.zip`，附带 `zoom-shell-<版本>-demo-linux-x86_64`（Ubuntu 上编译的 demo）与 `SHA256SUMS`，自动创建 GitHub Release 并上传。
+
 ## License
 
 MIT
