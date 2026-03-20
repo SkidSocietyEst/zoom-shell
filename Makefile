@@ -35,6 +35,7 @@ EXT_SRCS = $(EXT_DIR)/hexdump/zoom_shell_hexdump.c \
            $(EXT_DIR)/alias/zoom_shell_alias.c \
            $(EXT_DIR)/script/zoom_shell_script.c \
            $(EXT_DIR)/progress/zoom_shell_progress.c \
+           $(EXT_DIR)/ai_bridge/zoom_shell_ai_bridge.c \
            $(EXT_DIR)/game/zoom_shell_2048.c \
            $(EXT_DIR)/game/zoom_shell_pushbox.c \
            $(EXT_DIR)/game/zoom_shell_snake.c
@@ -101,6 +102,9 @@ $(BUILD_DIR)/zoom_shell_script.o: $(EXT_DIR)/script/zoom_shell_script.c | $(BUIL
 $(BUILD_DIR)/zoom_shell_progress.o: $(EXT_DIR)/progress/zoom_shell_progress.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
+$(BUILD_DIR)/zoom_shell_ai_bridge.o: $(EXT_DIR)/ai_bridge/zoom_shell_ai_bridge.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
 $(BUILD_DIR)/zoom_shell_2048.o: $(EXT_DIR)/game/zoom_shell_2048.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
@@ -147,6 +151,7 @@ ALL_TEST_SRCS = $(SRC_DIR)/zoom_shell_core.c \
                 $(EXT_DIR)/alias/zoom_shell_alias.c \
                 $(EXT_DIR)/script/zoom_shell_script.c \
                 $(EXT_DIR)/progress/zoom_shell_progress.c \
+                $(EXT_DIR)/ai_bridge/zoom_shell_ai_bridge.c \
                 $(EXT_DIR)/game/zoom_shell_2048.c \
                 $(EXT_DIR)/game/zoom_shell_pushbox.c \
                 $(EXT_DIR)/game/zoom_shell_snake.c \
@@ -162,7 +167,7 @@ clean:
 	rm -rf $(BUILD_DIR)
 
 help:
-	@echo "Zoom Shell v1.0 Build System"
+	@echo "Zoom Shell v1.1 Build System"
 	@echo ""
 	@echo "Targets:"
 	@echo "  all   - Build demo (default)"

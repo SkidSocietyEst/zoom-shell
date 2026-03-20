@@ -112,6 +112,15 @@
 #define ZOOM_USING_GAME                 0
 #endif
 
+/**
+ * AI / HTTP 桥接（可选）
+ * 需实现 zoom_ai_http_post_fn_t 并在端口层调用 zoom_ai_bridge_set_post()。
+ * 不包含 TLS/HTTP 客户端，适合 ESP-IDF / lwIP 等环境自行对接。
+ */
+#ifndef ZOOM_USING_AI_BRIDGE
+#define ZOOM_USING_AI_BRIDGE            0
+#endif
+
 /* ======================== 容量参数 ======================== */
 
 /** 命令行最大长度 */
@@ -162,6 +171,16 @@
 /** 日志缓冲区 */
 #ifndef ZOOM_LOG_BUFFER_SIZE
 #define ZOOM_LOG_BUFFER_SIZE            128
+#endif
+
+/** AI 桥接：目标 URL 最大长度 */
+#ifndef ZOOM_AI_URL_MAX
+#define ZOOM_AI_URL_MAX                 192
+#endif
+
+/** AI 桥接：HTTP 响应缓冲（静态） */
+#ifndef ZOOM_AI_RESP_MAX
+#define ZOOM_AI_RESP_MAX                512
 #endif
 
 /** 提示符最大长度 */

@@ -1,7 +1,7 @@
 /**
  * @file zoom_shell.h
  * @brief Zoom Shell — 嵌入式增强型 Shell
- * @version 1.0.0
+ * @version 1.1.0
  *
  * 三大特色:
  *   1. 层级子命令树（借鉴 Zephyr Shell，API 更简洁）
@@ -31,9 +31,9 @@ extern "C" {
  *  版本信息
  * ================================================================ */
 #define ZOOM_SHELL_VERSION_MAJOR    1
-#define ZOOM_SHELL_VERSION_MINOR    0
+#define ZOOM_SHELL_VERSION_MINOR    1
 #define ZOOM_SHELL_VERSION_PATCH    0
-#define ZOOM_SHELL_VERSION_STRING   "1.0.0"
+#define ZOOM_SHELL_VERSION_STRING   "1.1.0"
 
 /* ================================================================
  *  前向声明
@@ -100,6 +100,19 @@ typedef int (*zoom_cmd_func_t)(zoom_shell_t *shell, int argc, char *argv[]);
 /** I/O 回调 */
 typedef int16_t (*zoom_read_t)(char *data, uint16_t len);
 typedef int16_t (*zoom_write_t)(const char *data, uint16_t len);
+
+#if ZOOM_USING_AI_BRIDGE
+/**
+ * AI 桥接 HTTP POST 回调（用户实现：ESP-IDF / mbedTLS / 平台 SDK）
+ * @return 写入 resp_buf 的字节数，失败返回负值
+ */
+typedef int (*zoom_ai_http_post_fn_t)(zoom_shell_t *shell,
+                                      const char *url,
+                                      const char *body,
+                                      uint16_t body_len,
+                                      char *resp_buf,
+                                      uint16_t resp_buf_size);
+#endif
 
 /* ================================================================
  *  数据结构
@@ -287,6 +300,14 @@ struct zoom_shell {
         const char *desc;
     } keybinds[ZOOM_KEYBIND_MAX];
     uint8_t keybindCount;
+#endif
+
+#if ZOOM_USING_AI_BRIDGE
+    /* ---------- AI / HTTP 桥接（可选） ---------- */
+    struct {
+        char                   url[ZOOM_AI_URL_MAX];
+        zoom_ai_http_post_fn_t http_post;
+    } ai_bridge;
 #endif
 
     /* ---------- 用户扩展 ---------- */
@@ -573,6 +594,10 @@ void zoom_shell_passthrough_exit(zoom_shell_t *shell);
 #if ZOOM_USING_KEYBIND
 int zoom_shell_keybind_add(zoom_shell_t *shell, uint8_t key,
     void (*handler)(zoom_shell_t *), const char *desc);
+#endif
+
+#if ZOOM_USING_AI_BRIDGE
+void zoom_ai_bridge_set_post(zoom_shell_t *shell, zoom_ai_http_post_fn_t fn);
 #endif
 
 #ifdef __cplusplus

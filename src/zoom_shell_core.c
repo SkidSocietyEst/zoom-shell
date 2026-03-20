@@ -413,6 +413,11 @@ int zoom_shell_init(zoom_shell_t *shell, char *buffer, uint16_t size)
     shell->keybindCount = 0;
 #endif
 
+#if ZOOM_USING_AI_BRIDGE
+    shell->ai_bridge.url[0] = '\0';
+    shell->ai_bridge.http_post = NULL;
+#endif
+
     shell->state = ZOOM_STATE_RUNNING;
     shell->status.isActive = 1;
     return 0;

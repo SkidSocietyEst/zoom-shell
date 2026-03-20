@@ -126,6 +126,32 @@ ZOOM_EXPORT_USER(admin, "admin", ZOOM_USER_ADMIN);
 ZOOM_EXPORT_USER(root,  "root",  ZOOM_USER_ROOT);
 
 /* ================================================================
+ *  AI 桥接占位（x86 demo 无真实 HTTP，仅演示命令与回调链路）
+ * ================================================================ */
+
+#if ZOOM_USING_AI_BRIDGE
+static int demo_ai_http_post(zoom_shell_t *shell, const char *url, const char *body,
+                             uint16_t body_len, char *resp_buf, uint16_t resp_buf_size)
+{
+    (void)shell;
+    (void)url;
+    const char *head = "[demo] ";
+    uint16_t i = 0;
+    while (head[i] && i + 1 < resp_buf_size) {
+        resp_buf[i] = head[i];
+        i++;
+    }
+    uint16_t j = 0;
+    while (j < body_len && i + 1 < resp_buf_size) {
+        resp_buf[i] = body[j];
+        i++;
+        j++;
+    }
+    return (int)i;
+}
+#endif
+
+/* ================================================================
  *  初始化
  * ================================================================ */
 
@@ -154,5 +180,9 @@ void zoom_shell_port_init(void)
         extern void zoom_log_init(zoom_shell_t *);
         zoom_log_init(&g_shell);
     }
+#endif
+
+#if ZOOM_USING_AI_BRIDGE
+    zoom_ai_bridge_set_post(&g_shell, demo_ai_http_post);
 #endif
 }

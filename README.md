@@ -1,8 +1,19 @@
-# Zoom Shell v1.0
+# Zoom Shell v1.1
 
 **嵌入式增强型 Shell** — 零 malloc，零 OS 依赖，可在裸机单片机上运行。
 
 融合 Zephyr Shell、RT-Thread msh、FreeRTOS CLI、USMART、nr_micro_shell、letter-shell 的精华，打造三大独有特色。
+
+**说明文档**（详见 [docs/](docs/)）：
+
+| 文档 | 内容 |
+|------|------|
+| [docs/README.md](docs/README.md) | 文档索引 |
+| [docs/getting_started.md](docs/getting_started.md) | 编译、测试、目录与配置入口 |
+| [docs/extensions_overview.md](docs/extensions_overview.md) | 扩展模块与宏对照表 |
+| [docs/porting_general.md](docs/porting_general.md) | 通用移植清单（链接脚本、Tick、I/O） |
+| [docs/porting_esp_idf.md](docs/porting_esp_idf.md) | ESP-IDF 移植专章 |
+| [docs/ai_bridge.md](docs/ai_bridge.md) | AI HTTP 桥接：开关、回调、`ai` 命令、网关与安全 |
 
 ## 三大特色
 
@@ -244,6 +255,19 @@ ZOOM_EXPORT_USER(name, password, level);
 - **零 OS 依赖** — 仅依赖 `<stdint.h>` `<stdbool.h>` `<stddef.h>` `<string.h>` `<stdarg.h>`
 - **I/O 纯回调** — read/write 可对接 UART/USB/SPI/BLE 等任何接口
 - **条件编译裁剪** — 每个功能模块可独立开关，最小配置约 2KB ROM
+
+## 与 OpenClaw / Claw 生态协作
+
+**OpenClaw、NullClaw、ZeroClaw、Mimiclaw** 等属于「自托管 AI 助手 / 多通道编排」类应用（常见为 Node / Rust / Zig 或带网络栈的 MCU 固件），与 Zoom Shell（串口调试命令行）**职责不同**，**不会**作为子模块合并进本仓库核心。
+
+推荐协作方式：
+
+| 方式 | 说明 |
+|------|------|
+| **串口桥（主机侧）** | 设备运行 Zoom Shell，PC 上运行 OpenClaw 等工具；通过串口把文本发到设备，设备侧仍走 `read`/`write` 回调。无需改库，只需在文档/脚本里约定波特率与行协议。 |
+| **可选 `ai` 扩展（固件侧）** | 开启 `ZOOM_USING_AI_BRIDGE` 后，提供 **HTTP POST 回调**（由你在 ESP-IDF / mbedTLS 等环境中实现），可用 `ai url` / `ai ask` 将一行文本 POST 到自建网关，再转发到任意 LLM 或 OpenClaw 兼容服务。库内**不包含** TLS/HTTP 实现，避免强依赖网络栈。 |
+
+与 **Mimiclaw** 等「MCU + WiFi + LLM」项目的关系：**概念互补**——可参考其联网与密钥管理方式；若需类似能力，请在本扩展之上自行对接平台 SDK，**不**声称与上游 API 兼容。
 
 ## CI / 发版（GitHub Actions）
 

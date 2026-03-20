@@ -204,6 +204,29 @@ ZOOM_EXPORT_USER(admin,  "admin",   ZOOM_USER_ADMIN);
 static zoom_shell_t g_shell;
 static char g_buffer[768];  /* 128 * (5+1) */
 
+#if ZOOM_USING_AI_BRIDGE
+/** 测试用 HTTP POST stub：回显 mock: + body */
+static int test_ai_mock_post(zoom_shell_t *shell, const char *url, const char *body,
+                             uint16_t body_len, char *resp_buf, uint16_t resp_buf_size)
+{
+    (void)shell;
+    (void)url;
+    const char *prefix = "mock:";
+    uint16_t i = 0;
+    while (prefix[i] && i + 1 < resp_buf_size) {
+        resp_buf[i] = prefix[i];
+        i++;
+    }
+    uint16_t j = 0;
+    while (j < body_len && i + 1 < resp_buf_size) {
+        resp_buf[i] = body[j];
+        i++;
+        j++;
+    }
+    return (int)i;
+}
+#endif
+
 static void setup_shell(void)
 {
     memset(&g_shell, 0, sizeof(g_shell));
@@ -227,6 +250,10 @@ static void setup_shell(void)
 
     int ret = zoom_shell_init(&g_shell, g_buffer, sizeof(g_buffer));
     TEST_ASSERT_EQ(ret, 0, "shell init should succeed");
+
+#if ZOOM_USING_AI_BRIDGE
+    zoom_ai_bridge_set_post(&g_shell, test_ai_mock_post);
+#endif
 }
 
 static void teardown_shell(void)
@@ -746,7 +773,7 @@ static void test_builtin_version(void)
 {
     setup_shell();
     const char *out = exec_and_capture("version");
-    TEST_ASSERT_STR_CONTAINS(out, "1.0.0", "version should show 1.0.0");
+    TEST_ASSERT_STR_CONTAINS(out, "1.1.0", "version should show 1.1.0");
     teardown_shell();
 }
 
@@ -1148,6 +1175,29 @@ static void test_script_list(void)
 }
 
 /* ================================================================
+ *  测试: AI HTTP 桥接
+ * ================================================================ */
+
+#if ZOOM_USING_AI_BRIDGE
+static void test_ai_bridge_status(void)
+{
+    setup_shell();
+    const char *out = exec_and_capture("ai status");
+    TEST_ASSERT_STR_CONTAINS(out, "registered", "mock POST should be registered");
+    teardown_shell();
+}
+
+static void test_ai_bridge_ask(void)
+{
+    setup_shell();
+    exec_and_capture("ai url http://example.local/ai");
+    const char *out = exec_and_capture("ai ask hello world");
+    TEST_ASSERT_STR_CONTAINS(out, "mock:hello world", "mock should echo body");
+    teardown_shell();
+}
+#endif
+
+/* ================================================================
  *  主入口
  * ================================================================ */
 
@@ -1285,6 +1335,13 @@ int main(void)
     printf("\n[Script Extension]\n");
     RUN_TEST(test_script_define_and_run);
     RUN_TEST(test_script_list);
+
+#if ZOOM_USING_AI_BRIDGE
+    /* AI HTTP 桥接 */
+    printf("\n[AI Bridge Extension]\n");
+    RUN_TEST(test_ai_bridge_status);
+    RUN_TEST(test_ai_bridge_ask);
+#endif
 
     /* 汇总 */
     printf("\n========================================\n");

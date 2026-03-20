@@ -28,6 +28,7 @@
 #define ZOOM_USING_SCRIPT           1
 #define ZOOM_USING_PROGRESS         1
 #define ZOOM_USING_GAME             1
+#define ZOOM_USING_AI_BRIDGE        1
 
 /* 容量 */
 #define ZOOM_CMD_MAX_LENGTH         256
