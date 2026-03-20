@@ -79,6 +79,16 @@ zoom> some_command
 | 条件编译命令 | - | - | - | Y | - | - | **Y** |
 | ANSI 彩色输出 | - | - | - | Y | - | - | **Y** |
 
+## AI HTTP 桥接（可选扩展）
+
+固件侧需要把串口上的一句话转发到**自建 HTTP 网关**（再对接 LLM、OpenClaw 兼容服务等）时，可打开 **`ZOOM_USING_AI_BRIDGE`**，编译并链接 `extensions/ai_bridge/zoom_shell_ai_bridge.c`。
+
+- **Shell 命令**：`ai url <http(s)://...>` 设置 POST 地址；`ai ask <文本...>` 将整段文字作为请求体发出；`ai status` 查看配置与回调是否就绪。
+- **端口实现**：库内**不包含** TLS/HTTP 实现。在 `zoom_shell_init()` 成功后调用 **`zoom_ai_bridge_set_post(shell, your_http_post)`**，在回调里使用 ESP-IDF `esp_http_client`、mbedTLS 等发送 POST，并将响应写入缓冲区供 Shell 打印。
+- **安全**：API Key 建议放在网关环境变量中，由网关访问云 API；固件只保存内网或可配置的 URL。
+
+**详细文档**：[docs/ai_bridge.md](docs/ai_bridge.md)。与 OpenClaw / Claw 生态的协作关系见下文「与 OpenClaw / Claw 生态协作」。
+
 ## 快速开始
 
 ### 编译运行 x86 Demo
@@ -257,6 +267,8 @@ ZOOM_EXPORT_USER(name, password, level);
 - **条件编译裁剪** — 每个功能模块可独立开关，最小配置约 2KB ROM
 
 ## 与 OpenClaw / Claw 生态协作
+
+固件侧 **`ai` 命令与 HTTP 回调**说明见上文「**AI HTTP 桥接（可选扩展）**」；本节补充与主机侧工具链的分工。
 
 **OpenClaw、NullClaw、ZeroClaw、Mimiclaw** 等属于「自托管 AI 助手 / 多通道编排」类应用（常见为 Node / Rust / Zig 或带网络栈的 MCU 固件），与 Zoom Shell（串口调试命令行）**职责不同**，**不会**作为子模块合并进本仓库核心。
 
